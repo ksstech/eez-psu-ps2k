@@ -1,28 +1,28 @@
 #!/usr/bin/env bash
-# ea-ps2k-rpi-deploy.sh  —  Clean + install EA-PS2k stack on RPi5
+# psu-ps2k-rpi-deploy.sh  —  Clean + install EA-PS2k stack on RPi5
 #
-# Run from the directory containing all ea-ps2k files, e.g.:
-#   cd /home/vh/ea-ps2k
-#   bash ea-ps2k-rpi-deploy.sh
+# Run from the directory containing all psu-ps2k files, e.g.:
+#   cd /home/vh/psu-ps2k
+#   bash psu-ps2k-rpi-deploy.sh
 #
 # What it does:
 #   Phase 1 — Teardown old environment
-#     1. Stop + disable ea_ps2342_bridge service
+#     1. Stop + disable psu_ps2k_bridge service
 #     2. Remove old service file
 #     3. Remove old udev rules
-#     4. Remove old script directory /home/vh/ea_ps2342/
+#     4. Remove old script directory /home/vh/psu_ps2k/
 #   Phase 2 — Install new environment
 #     5. Install pyserial (if not present)
-#     6. Create /opt/ea-ps2k/ and copy files
+#     6. Create /opt/psu-ps2k/ and copy files
 #     7. Install consolidated udev rule (autosuspend + symlink)
-#     8. Install + enable ea-ps2k-bridge.service
-#     9. Install + enable ea-ps2k-monitor.service + timer
+#     8. Install + enable psu-ps2k-bridge.service
+#     9. Install + enable psu-ps2k-monitor.service + timer
 #    10. Start bridge and verify
 #    11. Run health check
 
 set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-INSTALL_DIR="/opt/ea-ps2k"
+INSTALL_DIR="/opt/psu-ps2k"
 
 echo ""
 echo "════════════════════════════════════════════════════════"
@@ -36,23 +36,23 @@ echo "[ Phase 1: Teardown ]"
 echo ""
 
 # 1. Stop and disable old bridge service
-echo "[1/4] Stopping old bridge service (ea_ps2342_bridge)..."
-if systemctl is-active --quiet ea_ps2342_bridge 2>/dev/null; then
-    sudo systemctl stop ea_ps2342_bridge
+echo "[1/4] Stopping old bridge service (psu_ps2k_bridge)..."
+if systemctl is-active --quiet psu_ps2k_bridge 2>/dev/null; then
+    sudo systemctl stop psu_ps2k_bridge
     echo "  Stopped."
 else
     echo "  Not running (OK)."
 fi
-if systemctl is-enabled --quiet ea_ps2342_bridge 2>/dev/null; then
-    sudo systemctl disable ea_ps2342_bridge
+if systemctl is-enabled --quiet psu_ps2k_bridge 2>/dev/null; then
+    sudo systemctl disable psu_ps2k_bridge
     echo "  Disabled."
 fi
 
 # 2. Remove old service file
 echo "[2/4] Removing old service file..."
-if [ -f /etc/systemd/system/ea_ps2342_bridge.service ]; then
-    sudo rm /etc/systemd/system/ea_ps2342_bridge.service
-    echo "  Removed /etc/systemd/system/ea_ps2342_bridge.service"
+if [ -f /etc/systemd/system/psu_ps2k_bridge.service ]; then
+    sudo rm /etc/systemd/system/psu_ps2k_bridge.service
+    echo "  Removed /etc/systemd/system/psu_ps2k_bridge.service"
 else
     echo "  Not found (OK)."
 fi
@@ -71,10 +71,10 @@ done
 [ $removed -eq 0 ] && echo "  None found (OK)."
 
 # 4. Archive old script directory
-echo "[4/4] Archiving old script directory /home/vh/ea_ps2342/..."
-if [ -d /home/vh/ea_ps2342 ]; then
-    sudo mv /home/vh/ea_ps2342 /home/vh/ea_ps2342.bak
-    echo "  Moved to /home/vh/ea_ps2342.bak (safe to delete later)"
+echo "[4/4] Archiving old script directory /home/vh/psu_ps2k/..."
+if [ -d /home/vh/psu_ps2k ]; then
+    sudo mv /home/vh/psu_ps2k /home/vh/psu_ps2k.bak
+    echo "  Moved to /home/vh/psu_ps2k.bak (safe to delete later)"
 else
     echo "  Not found (OK)."
 fi
@@ -98,26 +98,26 @@ else
     sudo apt-get install -y python3-serial
 fi
 
-# 6. Copy files to /opt/ea-ps2k/
+# 6. Copy files to /opt/psu-ps2k/
 echo "[6/10] Installing files to $INSTALL_DIR..."
 sudo mkdir -p "$INSTALL_DIR"
-sudo cp "$SCRIPT_DIR/ea_ps2k_driver.py"  "$INSTALL_DIR/"
-sudo cp "$SCRIPT_DIR/ea_ps2k_bridge.py"  "$INSTALL_DIR/"
-sudo cp "$SCRIPT_DIR/ea-ps2k-bridge.sh"  "$INSTALL_DIR/"
-sudo cp "$SCRIPT_DIR/ea-ps2k-monitor.py" "$INSTALL_DIR/"
-sudo chmod +x "$INSTALL_DIR/ea-ps2k-bridge.sh"
+sudo cp "$SCRIPT_DIR/psu_ps2k_driver.py"  "$INSTALL_DIR/"
+sudo cp "$SCRIPT_DIR/psu_ps2k_bridge.py"  "$INSTALL_DIR/"
+sudo cp "$SCRIPT_DIR/psu-ps2k-bridge.sh"  "$INSTALL_DIR/"
+sudo cp "$SCRIPT_DIR/psu-ps2k-monitor.py" "$INSTALL_DIR/"
+sudo chmod +x "$INSTALL_DIR/psu-ps2k-bridge.sh"
 sudo chown -R vh:vh "$INSTALL_DIR"
 echo "  Files installed to $INSTALL_DIR"
 
 # 7. Udev rule
-echo "[7/10] Installing udev rule (99-ea-ps2k-port.rules)..."
-sudo cp "$SCRIPT_DIR/99-ea-ps2k-port.rules" /etc/udev/rules.d/
+echo "[7/10] Installing udev rule (99-psu-ps2k-port.rules)..."
+sudo cp "$SCRIPT_DIR/99-psu-ps2k-port.rules" /etc/udev/rules.d/
 sudo udevadm control --reload-rules
 sudo udevadm trigger
 sleep 1
-if [ -e /dev/ea-ps2k-port ]; then
-    RESOLVED=$(readlink -f /dev/ea-ps2k-port)
-    echo "  /dev/ea-ps2k-port -> $RESOLVED"
+if [ -e /dev/psu-ps2k-port ]; then
+    RESOLVED=$(readlink -f /dev/psu-ps2k-port)
+    echo "  /dev/psu-ps2k-port -> $RESOLVED"
     # Verify autosuspend (|| true prevents set -e from triggering on missing files)
     for d in /sys/bus/usb/devices/*/; do
         vid=$(cat "$d/idVendor" 2>/dev/null || true)
@@ -128,35 +128,35 @@ if [ -e /dev/ea-ps2k-port ]; then
         fi
     done
 else
-    echo "  WARNING: /dev/ea-ps2k-port not found — is the PSU connected and powered?"
+    echo "  WARNING: /dev/psu-ps2k-port not found — is the PSU connected and powered?"
 fi
 
 # 8. Bridge service
-echo "[8/10] Installing ea-ps2k-bridge.service..."
-sudo cp "$SCRIPT_DIR/ea-ps2k-bridge.service" /etc/systemd/system/
+echo "[8/10] Installing psu-ps2k-bridge.service..."
+sudo cp "$SCRIPT_DIR/psu-ps2k-bridge.service" /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable ea-ps2k-bridge
+sudo systemctl enable psu-ps2k-bridge
 # restart, not start: on a redeploy the service is already running, and
 # `start` on an already-active unit is a no-op — it would leave the old
 # code running under the new files on disk without ever loading them.
-sudo systemctl restart ea-ps2k-bridge
+sudo systemctl restart psu-ps2k-bridge
 sleep 2
-STATUS=$(systemctl is-active ea-ps2k-bridge 2>/dev/null || echo "unknown")
+STATUS=$(systemctl is-active psu-ps2k-bridge 2>/dev/null || echo "unknown")
 echo "  Service status: $STATUS"
 if [ "$STATUS" != "active" ]; then
     echo "  ERROR: Service did not start. Log:"
-    sudo journalctl -u ea-ps2k-bridge -n 20 --no-pager
+    sudo journalctl -u psu-ps2k-bridge -n 20 --no-pager
     exit 1
 fi
 
 # 9. Monitor service + timer
-echo "[9/10] Installing ea-ps2k-monitor service + timer..."
-sudo cp "$SCRIPT_DIR/ea-ps2k-monitor.service" /etc/systemd/system/
-sudo cp "$SCRIPT_DIR/ea-ps2k-monitor.timer"   /etc/systemd/system/
+echo "[9/10] Installing psu-ps2k-monitor service + timer..."
+sudo cp "$SCRIPT_DIR/psu-ps2k-monitor.service" /etc/systemd/system/
+sudo cp "$SCRIPT_DIR/psu-ps2k-monitor.timer"   /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable --now ea-ps2k-monitor.timer
+sudo systemctl enable --now psu-ps2k-monitor.timer
 echo "  Timer enabled:"
-systemctl list-timers ea-ps2k-monitor.timer --no-pager
+systemctl list-timers psu-ps2k-monitor.timer --no-pager
 
 # 10. Quick bridge smoke test
 echo "[10/10] Bridge smoke test (*IDN? via Python socket)..."
@@ -180,16 +180,16 @@ echo ""
 echo "════════════════════════════════════════════════════════"
 echo "  Deploy complete"
 echo ""
-echo "  Bridge  : $(systemctl is-active ea-ps2k-bridge)"
-echo "  Monitor : $(systemctl is-active ea-ps2k-monitor.timer) (timer)"
-echo "  Device  : $(ls -la /dev/ea-ps2k-port 2>/dev/null || echo 'not found')"
+echo "  Bridge  : $(systemctl is-active psu-ps2k-bridge)"
+echo "  Monitor : $(systemctl is-active psu-ps2k-monitor.timer) (timer)"
+echo "  Device  : $(ls -la /dev/psu-ps2k-port 2>/dev/null || echo 'not found')"
 echo ""
 echo "  Useful commands:"
-echo "    sudo journalctl -u ea-ps2k-bridge -f"
-echo "    journalctl -t ea-ps2k-monitor -n 20"
-echo "    sudo systemctl status ea-ps2k-bridge"
+echo "    sudo journalctl -u psu-ps2k-bridge -f"
+echo "    journalctl -t psu-ps2k-monitor -n 20"
+echo "    sudo systemctl status psu-ps2k-bridge"
 echo ""
-echo "  Old scripts backed up at: /home/vh/ea_ps2342.bak/"
+echo "  Old scripts backed up at: /home/vh/psu_ps2k.bak/"
 echo "  Safe to delete once everything is verified working."
 echo "════════════════════════════════════════════════════════"
 echo ""

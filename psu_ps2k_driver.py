@@ -1,5 +1,5 @@
 """
-ea_ps2k_driver.py  —  Driver for EA-PS2000B series power supplies (binary protocol)
+psu_ps2k_driver.py  —  Driver for EA-PS2000B series power supplies (binary protocol)
 
 Supports all EA-PS2000B Triple models:
   EA-PS2342-06B  42 V / 6 A      EA-PS2342-10B  42 V / 10 A
@@ -159,12 +159,12 @@ class EaPs2k:
         is active raises EaProtocolError with a clear message.
     """
 
-    def __init__(self, port: str = '/dev/ea-ps2k-port', timeout: float = 0.05):
+    def __init__(self, port: str = '/dev/psu-ps2k-port', timeout: float = 0.05):
         """
         Parameters
         ----------
         port    : Serial port.
-                  Linux/RPi:  '/dev/ea-ps2k-port'  (udev stable symlink)
+                  Linux/RPi:  '/dev/psu-ps2k-port'  (udev stable symlink)
                   macOS:      '/dev/cu.usbmodem...'
                   Windows:    'COM3'  (or '\\\\.\\COM12' for ports above COM9)
         timeout : Serial read timeout in seconds.

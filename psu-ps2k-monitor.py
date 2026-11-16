@@ -1,11 +1,11 @@
 """
-ea-ps2k-monitor.py  —  Health-check monitor for the EA-PS2000B bridge stack
+psu-ps2k-monitor.py  —  Health-check monitor for the EA-PS2000B bridge stack
 
 Tests the full stack from USB device presence through to actual V/I readings
 via the TCP bridge. Logs pass/fail at each stage to syslog.
 
 Test stages (in order — stops at first failure):
-  1. USB device visible   — /dev/ea-ps2k-port symlink exists
+  1. USB device visible   — /dev/psu-ps2k-port symlink exists
   2. Bridge port open     — TCP connect to bridge host:port succeeds
   3. IDN response         — *IDN? returns a non-empty string
   4. CH1 V/I read         — MEAS:ALL? 1 returns parseable values
@@ -13,21 +13,21 @@ Test stages (in order — stops at first failure):
 
 Usage:
   # Run once (exit 0 = all OK, exit 1 = failure):
-  python3 ea-ps2k-monitor.py
+  python3 psu-ps2k-monitor.py
 
   # Run with custom host (when bridge is remote):
-  python3 ea-ps2k-monitor.py --host 192.168.1.6 --port 5025
+  python3 psu-ps2k-monitor.py --host 192.168.1.6 --port 5025
 
   # Suppress console output (syslog only):
-  python3 ea-ps2k-monitor.py --quiet
+  python3 psu-ps2k-monitor.py --quiet
 
 Deployment:
-  Installed to /opt/ea-ps2k/ and triggered every 30 minutes via
-  ea-ps2k-monitor.timer → ea-ps2k-monitor.service.
+  Installed to /opt/psu-ps2k/ and triggered every 30 minutes via
+  psu-ps2k-monitor.timer → psu-ps2k-monitor.service.
 
   Results are viewable with:
-    journalctl -t ea-ps2k-monitor -f
-    journalctl -t ea-ps2k-monitor -n 50
+    journalctl -t psu-ps2k-monitor -f
+    journalctl -t psu-ps2k-monitor -n 50
 """
 
 import argparse
@@ -42,8 +42,8 @@ import time
 DEFAULT_HOST      = '127.0.0.1'   # bridge on same machine
 DEFAULT_PORT      = 5025
 DEFAULT_TIMEOUT   = 5.0           # seconds per TCP operation
-DEVICE_SYMLINK    = '/dev/ea-ps2k-port'
-SYSLOG_TAG        = 'ea-ps2k-monitor'
+DEVICE_SYMLINK    = '/dev/psu-ps2k-port'
+SYSLOG_TAG        = 'psu-ps2k-monitor'
 
 
 # ── Logging ───────────────────────────────────────────────────────────────────

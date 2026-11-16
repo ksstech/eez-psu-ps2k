@@ -1,6 +1,6 @@
 @echo off
 REM ─────────────────────────────────────────────────────────────────────────
-REM  ea-ps2k-bridge.bat  —  EA-PS2000B Bridge Launcher — Windows workstation
+REM  psu-ps2k-bridge.bat  —  EA-PS2000B Bridge Launcher — Windows workstation
 REM  Edit COM_PORT below to match your device (check Device Manager)
 REM ─────────────────────────────────────────────────────────────────────────
 
@@ -15,7 +15,7 @@ echo.
 echo  Keep this window open.  Press Ctrl-C to stop.
 echo.
 
-python ea_ps2k_bridge.py --serial %COM_PORT% --tcp-port %TCP_PORT% --host 127.0.0.1
+python psu_ps2k_bridge.py --serial %COM_PORT% --tcp-port %TCP_PORT% --host 127.0.0.1
 
 echo.
 echo  Bridge stopped.

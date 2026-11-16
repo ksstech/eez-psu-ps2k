@@ -1,5 +1,5 @@
 """
-ea_ps2k_bridge.py  —  TCP/SCPI bridge for EA-PS2000B series power supplies
+psu_ps2k_bridge.py  —  TCP/SCPI bridge for EA-PS2000B series power supplies
 
 Runs a TCP server on the configured address and port.
 EEZ Studio (or any TCP client) connects and sends newline-terminated ASCII commands.
@@ -7,13 +7,13 @@ EEZ Studio (or any TCP client) connects and sends newline-terminated ASCII comma
 Deployment modes
 ────────────────
   Local workstation (Windows):
-      python ea_ps2k_bridge.py --serial COM3
+      python psu_ps2k_bridge.py --serial COM3
 
   LAN server (RPi/Ubuntu) — binds to all interfaces so remote clients can connect:
-      python ea_ps2k_bridge.py --serial /dev/ea-ps2k-port --host 0.0.0.0 --tcp-port 5025
+      python psu_ps2k_bridge.py --serial /dev/psu-ps2k-port --host 0.0.0.0 --tcp-port 5025
 
   The systemd service on the RPi starts this automatically at boot with the
-  correct arguments. ea-ps2k-bridge.sh is a manual fallback for testing.
+  correct arguments. psu-ps2k-bridge.sh is a manual fallback for testing.
 
 Supported commands
 ──────────────────
@@ -72,7 +72,7 @@ import time
 import serial
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from ea_ps2k_driver import EaPs2k, EaProtocolError, is_scpi_capable
+from psu_ps2k_driver import EaPs2k, EaProtocolError, is_scpi_capable
 
 # Minimum seconds between serial reconnect attempts.
 # Prevents hammering the port while the device is still coming up.
@@ -526,8 +526,8 @@ def main():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        '--serial', '-s', default='/dev/ea-ps2k-port', metavar='PORT',
-        help='Serial port  (Linux: /dev/ea-ps2k-port  Windows: COM3)')
+        '--serial', '-s', default='/dev/psu-ps2k-port', metavar='PORT',
+        help='Serial port  (Linux: /dev/psu-ps2k-port  Windows: COM3)')
     parser.add_argument(
         '--tcp-port', '-p', type=int, default=5025, metavar='PORT',
         help='TCP port to listen on')

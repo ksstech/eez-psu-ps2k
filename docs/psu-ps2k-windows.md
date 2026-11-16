@@ -14,17 +14,17 @@ pip install pyserial
 ## Start the bridge
 
 1. Find the COM port in Device Manager → Ports (COM & LPT)
-2. Edit `ea-ps2k-bridge.bat` and set `COM_PORT=COM3` (or whichever)
-3. Double-click `ea-ps2k-bridge.bat` — keep the window open
+2. Edit `psu-ps2k-bridge.bat` and set `COM_PORT=COM3` (or whichever)
+3. Double-click `psu-ps2k-bridge.bat` — keep the window open
 
 Or from PowerShell:
 ```powershell
-python ea_ps2k_bridge.py --serial COM3
+python psu_ps2k_bridge.py --serial COM3
 ```
 
 For COM ports above COM9:
 ```powershell
-python ea_ps2k_bridge.py --serial \\.\COM12
+python psu_ps2k_bridge.py --serial \\.\COM12
 ```
 
 Expected startup output (bridge v1.0.7+):
@@ -41,15 +41,15 @@ Expected startup output (bridge v1.0.7+):
 
 Add instrument → Ethernet → `127.0.0.1` port `5025`
 
-Install the extension: Home → Extensions → Install → select `ea-ps2000-series-1.0.29.zip`
+Install the extension: Home → Extensions → Install → select `eez-psu-ps2k-1.0.29.zip`
 
 ## Files
 
 | File | Purpose |
 |------|---------|
-| `ea_ps2k_driver.py` | Binary protocol driver (shared with RPi version) |
-| `ea_ps2k_bridge.py` | TCP bridge server (v1.0.7) |
-| `ea-ps2k-bridge.bat` | Double-click launcher |
+| `psu_ps2k_driver.py` | Binary protocol driver (shared with RPi version) |
+| `psu_ps2k_bridge.py` | TCP bridge server (v1.0.7) |
+| `psu-ps2k-bridge.bat` | Double-click launcher |
 | `requirements.txt` | Python dependencies (`pip install pyserial`) |
 | `eezstudio/package.json` | EEZ Studio extension source (v1.0.29) |
 | `make-eez-zip.bat` | Builds the installable extension zip |
@@ -96,9 +96,9 @@ every shortcut here that shows multi-line output (Live, Configure, Output,
 Both On/Off) injects a small CSS fix on first run of the session:
 
 ```javascript
-if (!document.getElementById('ea-ps2k-toast-fix')) {
+if (!document.getElementById('psu-ps2k-toast-fix')) {
     var _s = document.createElement('style');
-    _s.id = 'ea-ps2k-toast-fix';
+    _s.id = 'psu-ps2k-toast-fix';
     _s.textContent = '.Toastify__toast-body{white-space:pre-line}';
     document.head.appendChild(_s);
 }

@@ -1,4 +1,4 @@
-# eez-ea-ps2k
+# eez-psu-ps2k
 
 Python driver, TCP/SCPI-style bridge, and EEZ Studio extension for the
 **EA Elektro-Automatik PS2000B Triple series** dual-output power supply
@@ -20,7 +20,7 @@ see [Using it without EEZ Studio](#using-it-without-eez-studio) below:
 2. **Raw TCP bridge** — newline-terminated ASCII commands from any tool that
    can open a socket (`nc`, a test harness, LabVIEW, another instrument's
    control script, etc.).
-3. **Python library** — `import ea_ps2k_driver`, talk to the device directly,
+3. **Python library** — `import psu_ps2k_driver`, talk to the device directly,
    no TCP layer or bridge process at all.
 
 New to this repo and just want the EEZ Studio extension installed? See
@@ -36,11 +36,11 @@ the wrong zip, and Safari auto-unzipping it).
 EA-PS2000B (USB, binary serial protocol, 115200 8-O-1)
      │
      ▼
-ea_ps2k_driver.py   ── EaPs2k class: telegram framing, checksums, typed
+psu_ps2k_driver.py   ── EaPs2k class: telegram framing, checksums, typed
      │                  accessors (set_voltage, get_actual, ...), CSV
      │                  logging, thread-safe transfer + reconnect
      ▼
-ea_ps2k_bridge.py   ── EaBridge class: translates newline-terminated ASCII
+psu_ps2k_bridge.py   ── EaBridge class: translates newline-terminated ASCII
      │                  commands (VOLT 1,12.5 / MEAS:ALL? 1 / ...) into
      │                  driver calls; runs a TCP server; background
      │                  watchdog thread keeps the serial connection alive
@@ -50,14 +50,14 @@ ea_ps2k_bridge.py   ── EaBridge class: translates newline-terminated ASCII
      │                  shortcuts (Configure, Live, Output, Logger, ...)
      │                  that send the same ASCII commands over the wire
      ├── Anything else that speaks the ASCII command set (see below)
-     └── LAN / internet, via router NAT (optional — see docs/ea-ps2k-rpi.md)
+     └── LAN / internet, via router NAT (optional — see docs/psu-ps2k-rpi.md)
 ```
 
 Three independent layers, each usable on its own:
-- **Driver** (`ea_ps2k_driver.py`) has no networking in it at all — it's a
+- **Driver** (`psu_ps2k_driver.py`) has no networking in it at all — it's a
   plain Python class wrapping the serial protocol. Usable standalone in any
   Python script or test harness.
-- **Bridge** (`ea_ps2k_bridge.py`) adds the TCP server and ASCII command
+- **Bridge** (`psu_ps2k_bridge.py`) adds the TCP server and ASCII command
   parser on top of the driver. This is what makes the device reachable from
   non-Python tools, and from other machines on the network.
 - **EEZ Studio extension** (`eezstudio/`) is a thin client of the bridge —
@@ -68,18 +68,18 @@ Three independent layers, each usable on its own:
 
 | Path | Purpose |
 |---|---|
-| `ea_ps2k_driver.py` | Core driver — `EaPs2k` class. No networking; pure serial protocol + typed Python API. |
-| `ea_ps2k_bridge.py` | TCP server translating ASCII commands to driver calls. `EaBridge` class + `main()` CLI entry point. |
-| `ea-ps2k-monitor.py` | Standalone health-check script — tests USB device → bridge TCP → IDN → both channels' readback, logs pass/fail to syslog. Run manually or via the packaged systemd timer. |
-| `ea-ps2k-bridge.sh` / `ea-ps2k-bridge.bat` | Manual/debug launchers (Linux / Windows) — for testing before enabling the systemd service, or for simple always-manual use. |
-| `ea-ps2k-install.sh` | One-shot RPi/Ubuntu installer — Python deps, udev rule, systemd service, starts it. |
-| `ea-ps2k-rpi-deploy.sh` | Fuller RPi deploy script — additionally tears down a previous `ea_ps2342`-named install (old naming, pre-rename) and installs the monitor timer too. |
-| `99-ea-ps2k-port.rules` | udev rule: stable `/dev/ea-ps2k-port` symlink by VID:PID + disables USB autosuspend. See [Reliability & Performance](#reliability--performance). |
-| `ea-ps2k-bridge.service`, `ea-ps2k-monitor.service`, `ea-ps2k-monitor.timer` | systemd units for the bridge and its periodic health check. |
-| `eezstudio/` | EEZ Studio extension source — `package.json` (shortcuts + metadata), `.idf`/`.sdl` (instrument definition), `image.png`. Built into a distributable zip by `build-extension-zip.py` and published as a [GitHub Release](https://github.com/ksstech/eez-ea-ps2k/releases) (not committed — see `.gitignore`). |
+| `psu_ps2k_driver.py` | Core driver — `EaPs2k` class. No networking; pure serial protocol + typed Python API. |
+| `psu_ps2k_bridge.py` | TCP server translating ASCII commands to driver calls. `EaBridge` class + `main()` CLI entry point. |
+| `psu-ps2k-monitor.py` | Standalone health-check script — tests USB device → bridge TCP → IDN → both channels' readback, logs pass/fail to syslog. Run manually or via the packaged systemd timer. |
+| `psu-ps2k-bridge.sh` / `psu-ps2k-bridge.bat` | Manual/debug launchers (Linux / Windows) — for testing before enabling the systemd service, or for simple always-manual use. |
+| `psu-ps2k-install.sh` | One-shot RPi/Ubuntu installer — Python deps, udev rule, systemd service, starts it. |
+| `psu-ps2k-rpi-deploy.sh` | Fuller RPi deploy script — additionally tears down a previous `psu_ps2k`-named install (old naming, pre-rename) and installs the monitor timer too. |
+| `99-psu-ps2k-port.rules` | udev rule: stable `/dev/psu-ps2k-port` symlink by VID:PID + disables USB autosuspend. See [Reliability & Performance](#reliability--performance). |
+| `psu-ps2k-bridge.service`, `psu-ps2k-monitor.service`, `psu-ps2k-monitor.timer` | systemd units for the bridge and its periodic health check. |
+| `eezstudio/` | EEZ Studio extension source — `package.json` (shortcuts + metadata), `.idf`/`.sdl` (instrument definition), `image.png`. Built into a distributable zip by `build-extension-zip.py` and published as a [GitHub Release](https://github.com/ksstech/eez-psu-ps2k/releases) (not committed — see `.gitignore`). |
 | `build-extension-zip.py` | Builds the `eezstudio/` folder into a release zip. Cross-platform (Python 3, stdlib only) — see [Development](#development). |
-| `docs/ea-ps2k-rpi.md` | Full RPi/Ubuntu server deployment guide — install, VirtualHere exclusion, troubleshooting. |
-| `docs/ea-ps2k-windows.md` | Windows workstation setup + EEZ Studio extension shortcut reference. |
+| `docs/psu-ps2k-rpi.md` | Full RPi/Ubuntu server deployment guide — install, VirtualHere exclusion, troubleshooting. |
+| `docs/psu-ps2k-windows.md` | Windows workstation setup + EEZ Studio extension shortcut reference. |
 | `requirements.txt` | `pyserial>=3.5` — the only dependency. |
 
 Cross-instrument reference material (patterns shared with the Keysight
@@ -92,17 +92,17 @@ Full platform-specific instructions are in the docs — this is the two-line ver
 
 **RPi / Ubuntu (LAN server, starts at boot):**
 ```bash
-chmod +x ea-ps2k-install.sh && ./ea-ps2k-install.sh
+chmod +x psu-ps2k-install.sh && ./psu-ps2k-install.sh
 ```
-See [docs/ea-ps2k-rpi.md](docs/ea-ps2k-rpi.md) for manual steps, VirtualHere
+See [docs/psu-ps2k-rpi.md](docs/psu-ps2k-rpi.md) for manual steps, VirtualHere
 device-sharing conflicts, and troubleshooting.
 
 **Windows workstation (local only):**
 ```powershell
 pip install pyserial
-python ea_ps2k_bridge.py --serial COM3
+python psu_ps2k_bridge.py --serial COM3
 ```
-See [docs/ea-ps2k-windows.md](docs/ea-ps2k-windows.md) for the full setup
+See [docs/psu-ps2k-windows.md](docs/psu-ps2k-windows.md) for the full setup
 and the EEZ Studio extension shortcut reference.
 
 ## Bridge command reference
@@ -198,9 +198,9 @@ SCPI-*like* front end for this instrument, EEZ Studio is just one client of it.
 If you're writing a Python tool and don't need TCP/remote access at all, use
 `EaPs2k` directly — no bridge process, no network layer:
 ```python
-from ea_ps2k_driver import EaPs2k
+from psu_ps2k_driver import EaPs2k
 
-with EaPs2k("/dev/ea-ps2k-port") as ps:      # or "COM3" on Windows
+with EaPs2k("/dev/psu-ps2k-port") as ps:      # or "COM3" on Windows
     ps.configure(channel=1, volts=12.0, amps=2.0, output_on=True)
     reading = ps.get_actual(1)
     print(reading["v"], reading["i"], reading["CC"])
@@ -217,19 +217,19 @@ or isn't on the same machine as the USB connection.
 Several non-obvious fixes were required to make this reliable as an
 always-on, unattended service — particularly around USB power management,
 serial error recovery, and TCP-level latency with EEZ Studio as a client.
-Summary (see [git history](https://github.com/ksstech/eez-ea-ps2k/commits/main)
+Summary (see [git history](https://github.com/ksstech/eez-psu-ps2k/commits/main)
 for the full story of each):
 
 | Problem | Fix | Where |
 |---|---|---|
-| Device stopped responding after idle days | USB autosuspend disabled via udev rule | `99-ea-ps2k-port.rules` |
-| `/dev/ttyACMx` renumbers on hub replug/reboot | Stable `/dev/ea-ps2k-port` symlink by VID:PID | `99-ea-ps2k-port.rules` |
-| `termios.error` on EIO not caught by `except OSError` | Explicit `_TERMIOS_ERROR` handling (not a subclass of `OSError`) | `ea_ps2k_driver.py` |
-| Port never reconnected when idle (no client polling) | Background watchdog thread, independent of client activity | `ea_ps2k_bridge.py` |
-| EEZ Studio showing ~6s round-trips on some commands | Short (100ms) socket timeout + dispatch-on-timeout fallback, instead of waiting a long timeout for a missing trailing `\n` | `ea_ps2k_bridge.py` |
-| Response latency from TCP batching | `TCP_NODELAY` on every accepted client socket | `ea_ps2k_bridge.py` |
-| Live toast polling both channels = 2x round trips | `MEAS:BOTH?`/`CONF:BOTH`/etc. — one round trip for both channels | `ea_ps2k_bridge.py` |
-| VirtualHere and the bridge both claim the USB device | Documented `IgnoredDevices` exclusion (exact syntax matters) | [docs/ea-ps2k-rpi.md](docs/ea-ps2k-rpi.md#virtualhere-exclusion) |
+| Device stopped responding after idle days | USB autosuspend disabled via udev rule | `99-psu-ps2k-port.rules` |
+| `/dev/ttyACMx` renumbers on hub replug/reboot | Stable `/dev/psu-ps2k-port` symlink by VID:PID | `99-psu-ps2k-port.rules` |
+| `termios.error` on EIO not caught by `except OSError` | Explicit `_TERMIOS_ERROR` handling (not a subclass of `OSError`) | `psu_ps2k_driver.py` |
+| Port never reconnected when idle (no client polling) | Background watchdog thread, independent of client activity | `psu_ps2k_bridge.py` |
+| EEZ Studio showing ~6s round-trips on some commands | Short (100ms) socket timeout + dispatch-on-timeout fallback, instead of waiting a long timeout for a missing trailing `\n` | `psu_ps2k_bridge.py` |
+| Response latency from TCP batching | `TCP_NODELAY` on every accepted client socket | `psu_ps2k_bridge.py` |
+| Live toast polling both channels = 2x round trips | `MEAS:BOTH?`/`CONF:BOTH`/etc. — one round trip for both channels | `psu_ps2k_bridge.py` |
+| VirtualHere and the bridge both claim the USB device | Documented `IgnoredDevices` exclusion (exact syntax matters) | [docs/psu-ps2k-rpi.md](docs/psu-ps2k-rpi.md#virtualhere-exclusion) |
 
 The ones above that aren't specific to this instrument's protocol —
 autosuspend, reconnect strategy, `TCP_NODELAY`, round-trip batching,
@@ -249,7 +249,7 @@ immediately rather than sending a command the device will reject anyway.
 **Workaround:** set CH1 and CH2 independently to the same values via
 `CONF:OUTP` — same electrical result without relying on the device's
 internal tracking mechanism. Full detail in
-[docs/ea-ps2k-rpi.md](docs/ea-ps2k-rpi.md#known-hardware-limitations).
+[docs/psu-ps2k-rpi.md](docs/psu-ps2k-rpi.md#known-hardware-limitations).
 
 **CH3 has no remote interface at all** (fixed 5V, front panel only) — a
 hardware limitation of the Triple series, not a driver gap.
@@ -260,10 +260,10 @@ This repo ships two independently-versioned, independently-deployable
 artifacts — don't conflate their version numbers, they track different
 things and change on different schedules:
 
-- **The bridge** (`ea_ps2k_bridge.py`, `ea_ps2k_driver.py`) — runs standalone,
+- **The bridge** (`psu_ps2k_bridge.py`, `psu_ps2k_driver.py`) — runs standalone,
   no EEZ Studio required (see [Using it without EEZ Studio](#using-it-without-eez-studio)).
-  Versioned by `__version__` in `ea_ps2k_bridge.py`, printed in its startup
-  banner. Bump it whenever `ea_ps2k_bridge.py` or `ea_ps2k_driver.py` changes,
+  Versioned by `__version__` in `psu_ps2k_bridge.py`, printed in its startup
+  banner. Bump it whenever `psu_ps2k_bridge.py` or `psu_ps2k_driver.py` changes,
   tag `bridge-vX.Y.Z`:
   ```bash
   git tag bridge-vX.Y.Z && git push origin bridge-vX.Y.Z
@@ -274,7 +274,7 @@ things and change on different schedules:
   ```bash
   python3 build-extension-zip.py
   git tag vX.Y.Z && git push origin vX.Y.Z
-  gh release create vX.Y.Z ea-ps2000-series-X.Y.Z.zip --title "vX.Y.Z" --notes "..."
+  gh release create vX.Y.Z eez-psu-ps2k-X.Y.Z.zip --title "vX.Y.Z" --notes "..."
   ```
 
 A commit touching only one side only needs that side's version bumped and

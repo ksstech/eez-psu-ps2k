@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
-#  ea-ps2k-install.sh  —  One-shot installer for RPi5/Ubuntu hosted deployment
+#  psu-ps2k-install.sh  —  One-shot installer for RPi5/Ubuntu hosted deployment
 #
 #  Run once as your normal user — uses sudo only where needed.
 #  Tested on Ubuntu 22.04 / 24.04 on Raspberry Pi 5.
@@ -9,8 +9,8 @@
 #    1. Installs Python 3 if not present
 #    2. Installs pyserial via apt (python3-serial)
 #    3. Adds current user to the 'dialout' group (serial port access)
-#    4. Copies bridge files to /opt/ea-ps2k/
-#    5. Installs udev rule for autosuspend-off + stable /dev/ea-ps2k-port symlink
+#    4. Copies bridge files to /opt/psu-ps2k/
+#    5. Installs udev rule for autosuspend-off + stable /dev/psu-ps2k-port symlink
 #    6. Installs and enables the systemd bridge service
 #    7. Starts the service
 # ─────────────────────────────────────────────────────────────────────────────
@@ -18,11 +18,11 @@
 set -e   # exit on any error
 
 # ── Configuration — edit if needed ───────────────────────────────────────────
-INSTALL_DIR="/opt/ea-ps2k"
-SERVICE_NAME="ea-ps2k-bridge"
+INSTALL_DIR="/opt/psu-ps2k"
+SERVICE_NAME="psu-ps2k-bridge"
 TCP_PORT="5025"
 BIND_HOST="0.0.0.0"
-SERIAL_PORT="/dev/ea-ps2k-port"   # set by udev rule in step 5
+SERIAL_PORT="/dev/psu-ps2k-port"   # set by udev rule in step 5
 # ─────────────────────────────────────────────────────────────────────────────
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -66,41 +66,41 @@ fi
 # ── 4. Copy files ─────────────────────────────────────────────────────────────
 echo "[4/7] Installing bridge files to $INSTALL_DIR..."
 sudo mkdir -p "$INSTALL_DIR"
-sudo cp "$SCRIPT_DIR/ea_ps2k_driver.py"  "$INSTALL_DIR/"
-sudo cp "$SCRIPT_DIR/ea_ps2k_bridge.py"  "$INSTALL_DIR/"
-sudo cp "$SCRIPT_DIR/ea-ps2k-bridge.sh"  "$INSTALL_DIR/"
-sudo chmod +x "$INSTALL_DIR/ea-ps2k-bridge.sh"
+sudo cp "$SCRIPT_DIR/psu_ps2k_driver.py"  "$INSTALL_DIR/"
+sudo cp "$SCRIPT_DIR/psu_ps2k_bridge.py"  "$INSTALL_DIR/"
+sudo cp "$SCRIPT_DIR/psu-ps2k-bridge.sh"  "$INSTALL_DIR/"
+sudo chmod +x "$INSTALL_DIR/psu-ps2k-bridge.sh"
 sudo chown -R "$USER:$USER" "$INSTALL_DIR"
 echo "  Files copied to $INSTALL_DIR."
 
 # ── 5. Install udev rule for stable device naming + autosuspend disable ───────
 echo "[5/7] Installing udev rule..."
 
-UDEV_RULE="/etc/udev/rules.d/99-ea-ps2k-port.rules"
+UDEV_RULE="/etc/udev/rules.d/99-psu-ps2k-port.rules"
 
 # Remove old split rules if present
 [ -f /etc/udev/rules.d/99-ps2342.rules ]        && sudo rm /etc/udev/rules.d/99-ps2342.rules
 [ -f /etc/udev/rules.d/99-ea-ps2342-usb.rules ] && sudo rm /etc/udev/rules.d/99-ea-ps2342-usb.rules
 
-if [ -f "$SCRIPT_DIR/99-ea-ps2k-port.rules" ]; then
-    sudo cp "$SCRIPT_DIR/99-ea-ps2k-port.rules" "$UDEV_RULE"
+if [ -f "$SCRIPT_DIR/99-psu-ps2k-port.rules" ]; then
+    sudo cp "$SCRIPT_DIR/99-psu-ps2k-port.rules" "$UDEV_RULE"
 else
     sudo bash -c "cat > $UDEV_RULE" << 'UDEVRULE'
 ACTION=="add", SUBSYSTEM=="usb", ATTRS{idVendor}=="232e", ATTRS{idProduct}=="0018", \
     ATTR{power/control}="on"
 SUBSYSTEM=="tty", ATTRS{idVendor}=="232e", ATTRS{idProduct}=="0018", \
-    SYMLINK+="ea-ps2k-port"
+    SYMLINK+="psu-ps2k-port"
 UDEVRULE
 fi
 sudo udevadm control --reload-rules
 sudo udevadm trigger
 
 sleep 1
-if [ -e /dev/ea-ps2k-port ]; then
-    RESOLVED=$(readlink -f /dev/ea-ps2k-port)
-    echo "  /dev/ea-ps2k-port -> $RESOLVED"
+if [ -e /dev/psu-ps2k-port ]; then
+    RESOLVED=$(readlink -f /dev/psu-ps2k-port)
+    echo "  /dev/psu-ps2k-port -> $RESOLVED"
 else
-    echo "  WARNING: /dev/ea-ps2k-port not found yet."
+    echo "  WARNING: /dev/psu-ps2k-port not found yet."
     echo "  Expected if the PS2000B is not currently connected/powered."
     echo "  The symlink appears automatically when the device is plugged in."
 fi
@@ -121,7 +121,7 @@ StartLimitBurst=5
 Type=simple
 User=$USER
 WorkingDirectory=$INSTALL_DIR
-ExecStart=/usr/bin/python3 $INSTALL_DIR/ea_ps2k_bridge.py --serial $SERIAL_PORT --host $BIND_HOST --tcp-port $TCP_PORT
+ExecStart=/usr/bin/python3 $INSTALL_DIR/psu_ps2k_bridge.py --serial $SERIAL_PORT --host $BIND_HOST --tcp-port $TCP_PORT
 Restart=on-failure
 RestartSec=5s
 StandardOutput=journal
@@ -157,7 +157,7 @@ echo "  Useful commands:"
 echo "    sudo systemctl status  $SERVICE_NAME"
 echo "    sudo journalctl -u $SERVICE_NAME -f"
 echo "    sudo systemctl restart $SERVICE_NAME"
-echo "    bash $INSTALL_DIR/ea-ps2k-bridge.sh   (manual/debug mode)"
+echo "    bash $INSTALL_DIR/psu-ps2k-bridge.sh   (manual/debug mode)"
 echo "═══════════════════════════════════════════════════"
 echo ""
 
