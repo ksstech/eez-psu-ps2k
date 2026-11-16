@@ -12,7 +12,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 # ── Edit these if needed ──────────────────────────────────────────────────────
-SERIAL_PORT="/dev/psu-ps2k-port"  # stable udev symlink — see 99-psu-ps2k-port.rules
+SERIAL_PORT="/dev/ate-psu-ps2k"  # stable udev symlink — see 99-ate-psu-ps2k.rules
 TCP_PORT="5025"
 BIND_HOST="0.0.0.0"              # 0.0.0.0 = accessible from LAN
                                   # 127.0.0.1 = local only
@@ -35,7 +35,7 @@ echo ""
 # Check serial port exists before starting
 if [ ! -e "$SERIAL_PORT" ]; then
     echo "ERROR: Serial port $SERIAL_PORT not found."
-    echo "  Check the device is connected: ls -la /dev/psu-ps2k-port"
+    echo "  Check the device is connected: ls -la /dev/ate-psu-ps2k"
     echo "  If the udev symlink is missing: sudo udevadm trigger"
     exit 1
 fi

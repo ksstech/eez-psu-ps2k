@@ -12,7 +12,7 @@ on the LAN (or via a firewall NAT rule from anywhere on the internet).
 EA-PS2000B USB
      │
      ▼
-Raspberry Pi 5  (Ubuntu, /dev/psu-ps2k-port — stable udev symlink)
+Raspberry Pi 5  (Ubuntu, /dev/ate-psu-ps2k — stable udev symlink)
      │
      ├── psu_ps2k_driver.py  ← binary protocol driver
      ├── psu_ps2k_bridge.py  ← TCP/SCPI translation layer
@@ -45,8 +45,8 @@ chmod +x psu-ps2k-install.sh
 The installer:
 1. Installs Python 3 and `python3-serial` if not present
 2. Adds your user to the `dialout` group (serial port access)
-3. Copies bridge files to `/opt/psu-ps2k/`
-4. Installs a udev rule creating a stable `/dev/psu-ps2k-port` symlink and
+3. Copies bridge files to `/opt/ate-psu-ps2k/`
+4. Installs a udev rule creating a stable `/dev/ate-psu-ps2k` symlink and
    disabling USB autosuspend — both immune to `ttyACMx` renumbering and
    the "idle period" failure mode
 5. Installs and enables the `psu-ps2k-bridge` systemd service
@@ -81,20 +81,20 @@ sudo usermod -aG dialout $USER
 Rather than referencing `/dev/ttyACM0` directly — which can change if the
 PS2000B is connected via a USB hub and enumeration order shifts across
 reboots or replug events — install a udev rule that creates a stable
-`/dev/psu-ps2k-port` symlink based on the device's USB VID:PID.
+`/dev/ate-psu-ps2k` symlink based on the device's USB VID:PID.
 
 The same rule also disables USB autosuspend, which is the primary cause of
 the "works for a while, fails after 2 days idle" failure: Linux puts the USB
 device into a low-power state that the bridge cannot wake up from.
 
 ```bash
-sudo cp 99-psu-ps2k-port.rules /etc/udev/rules.d/
+sudo cp 99-ate-psu-ps2k.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules
 sudo udevadm trigger
 
 # Plug in the PS2000B if not already connected, then verify:
-ls -la /dev/psu-ps2k-port
-# Should show: /dev/psu-ps2k-port -> ttyACM0  (or ttyACM1, etc.)
+ls -la /dev/ate-psu-ps2k
+# Should show: /dev/ate-psu-ps2k -> ttyACM0  (or ttyACM1, etc.)
 
 # Verify autosuspend is disabled:
 cat /sys/bus/usb/devices/*/power/control
@@ -111,21 +111,21 @@ lsusb | grep -i "EA Elektro\|232e"
 ### 4. Copy bridge files
 
 ```bash
-sudo mkdir -p /opt/psu-ps2k
-sudo cp psu_ps2k_driver.py psu_ps2k_bridge.py psu-ps2k-bridge.sh /opt/psu-ps2k/
-sudo chown -R $USER:$USER /opt/psu-ps2k
-chmod +x /opt/psu-ps2k/psu-ps2k-bridge.sh
+sudo mkdir -p /opt/ate-psu-ps2k
+sudo cp psu_ps2k_driver.py psu_ps2k_bridge.py psu-ps2k-bridge.sh /opt/ate-psu-ps2k/
+sudo chown -R $USER:$USER /opt/ate-psu-ps2k
+chmod +x /opt/ate-psu-ps2k/psu-ps2k-bridge.sh
 ```
 
 ### 5. Test manually before enabling the service
 
 ```bash
-bash /opt/psu-ps2k/psu-ps2k-bridge.sh
+bash /opt/ate-psu-ps2k/psu-ps2k-bridge.sh
 ```
 
 Expected output:
 ```
-[Bridge] Connected to /dev/psu-ps2k-port
+[Bridge] Connected to /dev/ate-psu-ps2k
 [Bridge] PS 2342-06B  42 V / 6 A  fw V3.02
 [Bridge] Listening on 0.0.0.0:5025
 ```
@@ -139,9 +139,9 @@ echo "*IDN?" | nc 192.168.1.6 5025
 ### 6. Install the systemd service
 
 ```bash
-sudo cp psu-ps2k-bridge.service /etc/systemd/system/
+sudo cp ate-psu-ps2k-bridge.service /etc/systemd/system/
 # Edit the User= line to match your username:
-sudo nano /etc/systemd/system/psu-ps2k-bridge.service
+sudo nano /etc/systemd/system/ate-psu-ps2k-bridge.service
 
 sudo systemctl daemon-reload
 sudo systemctl enable psu-ps2k-bridge   # start at boot
@@ -259,7 +259,7 @@ port 5025 can control the power supply. Consider:
 
 | | Workstation (Windows) | RPi5 Server |
 |---|---|---|
-| Serial port | `COM3` | `/dev/psu-ps2k-port` (stable udev symlink) |
+| Serial port | `COM3` | `/dev/ate-psu-ps2k` (stable udev symlink) |
 | Bind address | `127.0.0.1` (local only) | `0.0.0.0` (all interfaces) |
 | Startup | `psu-ps2k-bridge.bat` (manual) | systemd (automatic at boot) |
 | Restart on crash | no | yes (5 s delay) |
@@ -303,8 +303,8 @@ result without relying on the device's internal tracking mechanism at all.
 **Service fails to start — serial port not found**
 ```bash
 sudo journalctl -u psu-ps2k-bridge -n 20
-# Look for: "Device not found: /dev/psu-ps2k-port"
-ls -la /dev/psu-ps2k-port
+# Look for: "Device not found: /dev/ate-psu-ps2k"
+ls -la /dev/ate-psu-ps2k
 # If missing: the PS2000B isn't connected/powered, or the udev rule isn't
 # installed. Check:
 sudo udevadm control --reload-rules && sudo udevadm trigger
@@ -335,7 +335,7 @@ it. Two distinct causes seen in practice, in order of likelihood:
 
 2. **The device node changed** (e.g. `/dev/ttyACM0` → `/dev/ttyACM1`) because
    the PS2000B is on a USB hub and enumeration order shifted after a reboot
-   or hub replug. The `/dev/psu-ps2k-port` udev symlink solves this — if for
+   or hub replug. The `/dev/ate-psu-ps2k` udev symlink solves this — if for
    any reason the bridge is pointing at a hardcoded ttyACMx path:
    ```bash
    sudo systemctl cat psu-ps2k-bridge | grep ExecStart
@@ -354,7 +354,7 @@ dmesg -w | grep -i "232e\|disconnect"
 #   - Try a direct connection to bypass any hub/isolator
 ```
 
-**PS2000B shows as VirtualHere device instead of `/dev/psu-ps2k-port`**
+**PS2000B shows as VirtualHere device instead of `/dev/ate-psu-ps2k`**
 ```
 The VH server is claiming the device before cdc_acm binds.
 Add the device to VH's IgnoredDevices list (see VirtualHere Exclusion above).
@@ -372,7 +372,7 @@ Fix: sudo systemctl restart psu-ps2k-bridge
 **Works for a few days then stops responding (idle-period failure)**
 ```
 Root cause: Linux USB autosuspend put the device into a low-power state.
-Fix: ensure 99-psu-ps2k-port.rules is installed (see step 3 above).
+Fix: ensure 99-ate-psu-ps2k.rules is installed (see step 3 above).
 Verify: cat /sys/bus/usb/devices/*/power/control — should show "on" not "auto"
 for the EA device.
 ```

@@ -10,7 +10,7 @@ Deployment modes
       python psu_ps2k_bridge.py --serial COM3
 
   LAN server (RPi/Ubuntu) — binds to all interfaces so remote clients can connect:
-      python psu_ps2k_bridge.py --serial /dev/psu-ps2k-port --host 0.0.0.0 --tcp-port 5025
+      python psu_ps2k_bridge.py --serial /dev/ate-psu-ps2k --host 0.0.0.0 --tcp-port 5025
 
   The systemd service on the RPi starts this automatically at boot with the
   correct arguments. psu-ps2k-bridge.sh is a manual fallback for testing.
@@ -526,8 +526,8 @@ def main():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        '--serial', '-s', default='/dev/psu-ps2k-port', metavar='PORT',
-        help='Serial port  (Linux: /dev/psu-ps2k-port  Windows: COM3)')
+        '--serial', '-s', default='/dev/ate-psu-ps2k', metavar='PORT',
+        help='Serial port  (Linux: /dev/ate-psu-ps2k  Windows: COM3)')
     parser.add_argument(
         '--tcp-port', '-p', type=int, default=5025, metavar='PORT',
         help='TCP port to listen on')

@@ -13,16 +13,16 @@
 #     4. Remove old script directory /home/vh/psu_ps2k/
 #   Phase 2 — Install new environment
 #     5. Install pyserial (if not present)
-#     6. Create /opt/psu-ps2k/ and copy files
+#     6. Create /opt/ate-psu-ps2k/ and copy files
 #     7. Install consolidated udev rule (autosuspend + symlink)
-#     8. Install + enable psu-ps2k-bridge.service
-#     9. Install + enable psu-ps2k-monitor.service + timer
+#     8. Install + enable ate-psu-ps2k-bridge.service
+#     9. Install + enable ate-psu-ps2k-monitor.service + timer
 #    10. Start bridge and verify
 #    11. Run health check
 
 set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-INSTALL_DIR="/opt/psu-ps2k"
+INSTALL_DIR="/opt/ate-psu-ps2k"
 
 echo ""
 echo "════════════════════════════════════════════════════════"
@@ -98,7 +98,7 @@ else
     sudo apt-get install -y python3-serial
 fi
 
-# 6. Copy files to /opt/psu-ps2k/
+# 6. Copy files to /opt/ate-psu-ps2k/
 echo "[6/10] Installing files to $INSTALL_DIR..."
 sudo mkdir -p "$INSTALL_DIR"
 sudo cp "$SCRIPT_DIR/psu_ps2k_driver.py"  "$INSTALL_DIR/"
@@ -110,14 +110,14 @@ sudo chown -R vh:vh "$INSTALL_DIR"
 echo "  Files installed to $INSTALL_DIR"
 
 # 7. Udev rule
-echo "[7/10] Installing udev rule (99-psu-ps2k-port.rules)..."
-sudo cp "$SCRIPT_DIR/99-psu-ps2k-port.rules" /etc/udev/rules.d/
+echo "[7/10] Installing udev rule (99-ate-psu-ps2k.rules)..."
+sudo cp "$SCRIPT_DIR/99-ate-psu-ps2k.rules" /etc/udev/rules.d/
 sudo udevadm control --reload-rules
 sudo udevadm trigger
 sleep 1
-if [ -e /dev/psu-ps2k-port ]; then
-    RESOLVED=$(readlink -f /dev/psu-ps2k-port)
-    echo "  /dev/psu-ps2k-port -> $RESOLVED"
+if [ -e /dev/ate-psu-ps2k ]; then
+    RESOLVED=$(readlink -f /dev/ate-psu-ps2k)
+    echo "  /dev/ate-psu-ps2k -> $RESOLVED"
     # Verify autosuspend (|| true prevents set -e from triggering on missing files)
     for d in /sys/bus/usb/devices/*/; do
         vid=$(cat "$d/idVendor" 2>/dev/null || true)
@@ -128,12 +128,12 @@ if [ -e /dev/psu-ps2k-port ]; then
         fi
     done
 else
-    echo "  WARNING: /dev/psu-ps2k-port not found — is the PSU connected and powered?"
+    echo "  WARNING: /dev/ate-psu-ps2k not found — is the PSU connected and powered?"
 fi
 
 # 8. Bridge service
-echo "[8/10] Installing psu-ps2k-bridge.service..."
-sudo cp "$SCRIPT_DIR/psu-ps2k-bridge.service" /etc/systemd/system/
+echo "[8/10] Installing ate-psu-ps2k-bridge.service..."
+sudo cp "$SCRIPT_DIR/ate-psu-ps2k-bridge.service" /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable psu-ps2k-bridge
 # restart, not start: on a redeploy the service is already running, and
@@ -151,12 +151,12 @@ fi
 
 # 9. Monitor service + timer
 echo "[9/10] Installing psu-ps2k-monitor service + timer..."
-sudo cp "$SCRIPT_DIR/psu-ps2k-monitor.service" /etc/systemd/system/
-sudo cp "$SCRIPT_DIR/psu-ps2k-monitor.timer"   /etc/systemd/system/
+sudo cp "$SCRIPT_DIR/ate-psu-ps2k-monitor.service" /etc/systemd/system/
+sudo cp "$SCRIPT_DIR/ate-psu-ps2k-monitor.timer"   /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable --now psu-ps2k-monitor.timer
+sudo systemctl enable --now ate-psu-ps2k-monitor.timer
 echo "  Timer enabled:"
-systemctl list-timers psu-ps2k-monitor.timer --no-pager
+systemctl list-timers ate-psu-ps2k-monitor.timer --no-pager
 
 # 10. Quick bridge smoke test
 echo "[10/10] Bridge smoke test (*IDN? via Python socket)..."
@@ -181,8 +181,8 @@ echo "════════════════════════�
 echo "  Deploy complete"
 echo ""
 echo "  Bridge  : $(systemctl is-active psu-ps2k-bridge)"
-echo "  Monitor : $(systemctl is-active psu-ps2k-monitor.timer) (timer)"
-echo "  Device  : $(ls -la /dev/psu-ps2k-port 2>/dev/null || echo 'not found')"
+echo "  Monitor : $(systemctl is-active ate-psu-ps2k-monitor.timer) (timer)"
+echo "  Device  : $(ls -la /dev/ate-psu-ps2k 2>/dev/null || echo 'not found')"
 echo ""
 echo "  Useful commands:"
 echo "    sudo journalctl -u psu-ps2k-bridge -f"

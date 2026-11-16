@@ -1,11 +1,11 @@
-# /etc/systemd/system/psu-ps2k-bridge.service
+# /etc/systemd/system/ate-psu-ps2k-bridge.service
 #
 # EA-PS2000B TCP bridge — systemd service unit
 #
 # Installation:
-#   sudo cp 99-psu-ps2k-port.rules /etc/udev/rules.d/   # if not already installed
+#   sudo cp 99-ate-psu-ps2k.rules /etc/udev/rules.d/   # if not already installed
 #   sudo udevadm control --reload-rules && sudo udevadm trigger
-#   sudo cp psu-ps2k-bridge.service /etc/systemd/system/
+#   sudo cp ate-psu-ps2k-bridge.service /etc/systemd/system/
 #   sudo systemctl daemon-reload
 #   sudo systemctl enable psu-ps2k-bridge
 #   sudo systemctl start  psu-ps2k-bridge
@@ -27,13 +27,13 @@ StartLimitBurst=5
 Type=simple
 # User confirmed via audit: whoami = vh on this RPi5
 User=vh
-# /dev/psu-ps2k-port is a stable symlink created by 99-psu-ps2k-port.rules (udev),
+# /dev/ate-psu-ps2k is a stable symlink created by 99-ate-psu-ps2k.rules (udev),
 # pointing at whichever /dev/ttyACMx the kernel currently assigns the PS2000B.
 # This keeps working even if the device is on a USB hub and its ACM number
 # shifts across reboots or hub replug events.
-WorkingDirectory=/opt/psu-ps2k
-ExecStart=/usr/bin/python3 /opt/psu-ps2k/psu_ps2k_bridge.py \
-    --serial /dev/psu-ps2k-port \
+WorkingDirectory=/opt/ate-psu-ps2k
+ExecStart=/usr/bin/python3 /opt/ate-psu-ps2k/psu_ps2k_bridge.py \
+    --serial /dev/ate-psu-ps2k \
     --host 0.0.0.0 \
     --tcp-port 5025
 # ─────────────────────────────────────────────────────────────────────────────

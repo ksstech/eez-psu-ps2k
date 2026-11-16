@@ -5,7 +5,7 @@ Tests the full stack from USB device presence through to actual V/I readings
 via the TCP bridge. Logs pass/fail at each stage to syslog.
 
 Test stages (in order — stops at first failure):
-  1. USB device visible   — /dev/psu-ps2k-port symlink exists
+  1. USB device visible   — /dev/ate-psu-ps2k symlink exists
   2. Bridge port open     — TCP connect to bridge host:port succeeds
   3. IDN response         — *IDN? returns a non-empty string
   4. CH1 V/I read         — MEAS:ALL? 1 returns parseable values
@@ -22,8 +22,8 @@ Usage:
   python3 psu-ps2k-monitor.py --quiet
 
 Deployment:
-  Installed to /opt/psu-ps2k/ and triggered every 30 minutes via
-  psu-ps2k-monitor.timer → psu-ps2k-monitor.service.
+  Installed to /opt/ate-psu-ps2k/ and triggered every 30 minutes via
+  ate-psu-ps2k-monitor.timer → ate-psu-ps2k-monitor.service.
 
   Results are viewable with:
     journalctl -t psu-ps2k-monitor -f
@@ -42,7 +42,7 @@ import time
 DEFAULT_HOST      = '127.0.0.1'   # bridge on same machine
 DEFAULT_PORT      = 5025
 DEFAULT_TIMEOUT   = 5.0           # seconds per TCP operation
-DEVICE_SYMLINK    = '/dev/psu-ps2k-port'
+DEVICE_SYMLINK    = '/dev/ate-psu-ps2k'
 SYSLOG_TAG        = 'psu-ps2k-monitor'
 
 

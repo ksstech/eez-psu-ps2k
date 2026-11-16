@@ -1,6 +1,6 @@
-# /etc/systemd/system/psu-ps2k-monitor.service
+# /etc/systemd/system/ate-psu-ps2k-monitor.service
 #
-# EA-PS2000B health check — oneshot service triggered by psu-ps2k-monitor.timer
+# EA-PS2000B health check — oneshot service triggered by ate-psu-ps2k-monitor.timer
 #
 # Runs psu-ps2k-monitor.py once (exits 0=OK, 1=fail).
 # Results logged to syslog under tag 'psu-ps2k-monitor'.
@@ -10,21 +10,21 @@
 #   journalctl -t psu-ps2k-monitor -n 50 --no-pager
 #
 # Installation:
-#   sudo cp psu-ps2k-monitor.service psu-ps2k-monitor.timer /etc/systemd/system/
-#   sudo cp psu-ps2k-monitor.py /opt/psu-ps2k/
+#   sudo cp ate-psu-ps2k-monitor.service ate-psu-ps2k-monitor.timer /etc/systemd/system/
+#   sudo cp psu-ps2k-monitor.py /opt/ate-psu-ps2k/
 #   sudo systemctl daemon-reload
-#   sudo systemctl enable --now psu-ps2k-monitor.timer
-#   sudo systemctl list-timers psu-ps2k-monitor.timer
+#   sudo systemctl enable --now ate-psu-ps2k-monitor.timer
+#   sudo systemctl list-timers ate-psu-ps2k-monitor.timer
 
 [Unit]
 Description=EA-PS2000B Bridge Health Check
-After=network.target psu-ps2k-bridge.service
+After=network.target ate-psu-ps2k-bridge.service
 
 [Service]
 Type=oneshot
 # User confirmed via audit: whoami = vh on this RPi5
 User=vh
-ExecStart=/usr/bin/python3 /opt/psu-ps2k/psu-ps2k-monitor.py --quiet
+ExecStart=/usr/bin/python3 /opt/ate-psu-ps2k/psu-ps2k-monitor.py --quiet
 # Exit code 1 = health check failed — logged to syslog, not treated as crash
 SuccessExitStatus=0 1
 StandardOutput=journal

@@ -74,8 +74,8 @@ Three independent layers, each usable on its own:
 | `psu-ps2k-bridge.sh` / `psu-ps2k-bridge.bat` | Manual/debug launchers (Linux / Windows) — for testing before enabling the systemd service, or for simple always-manual use. |
 | `psu-ps2k-install.sh` | One-shot RPi/Ubuntu installer — Python deps, udev rule, systemd service, starts it. |
 | `psu-ps2k-rpi-deploy.sh` | Fuller RPi deploy script — additionally tears down a previous `psu_ps2k`-named install (old naming, pre-rename) and installs the monitor timer too. |
-| `99-psu-ps2k-port.rules` | udev rule: stable `/dev/psu-ps2k-port` symlink by VID:PID + disables USB autosuspend. See [Reliability & Performance](#reliability--performance). |
-| `psu-ps2k-bridge.service`, `psu-ps2k-monitor.service`, `psu-ps2k-monitor.timer` | systemd units for the bridge and its periodic health check. |
+| `99-ate-psu-ps2k.rules` | udev rule: stable `/dev/ate-psu-ps2k` symlink by VID:PID + disables USB autosuspend. See [Reliability & Performance](#reliability--performance). |
+| `ate-psu-ps2k-bridge.service`, `ate-psu-ps2k-monitor.service`, `ate-psu-ps2k-monitor.timer` | systemd units for the bridge and its periodic health check. |
 | `eezstudio/` | EEZ Studio extension source — `package.json` (shortcuts + metadata), `.idf`/`.sdl` (instrument definition), `image.png`. Built into a distributable zip by `build-extension-zip.py` and published as a [GitHub Release](https://github.com/ksstech/eez-psu-ps2k/releases) (not committed — see `.gitignore`). |
 | `build-extension-zip.py` | Builds the `eezstudio/` folder into a release zip. Cross-platform (Python 3, stdlib only) — see [Development](#development). |
 | `docs/psu-ps2k-rpi.md` | Full RPi/Ubuntu server deployment guide — install, VirtualHere exclusion, troubleshooting. |
@@ -200,7 +200,7 @@ If you're writing a Python tool and don't need TCP/remote access at all, use
 ```python
 from psu_ps2k_driver import EaPs2k
 
-with EaPs2k("/dev/psu-ps2k-port") as ps:      # or "COM3" on Windows
+with EaPs2k("/dev/ate-psu-ps2k") as ps:      # or "COM3" on Windows
     ps.configure(channel=1, volts=12.0, amps=2.0, output_on=True)
     reading = ps.get_actual(1)
     print(reading["v"], reading["i"], reading["CC"])
@@ -222,8 +222,8 @@ for the full story of each):
 
 | Problem | Fix | Where |
 |---|---|---|
-| Device stopped responding after idle days | USB autosuspend disabled via udev rule | `99-psu-ps2k-port.rules` |
-| `/dev/ttyACMx` renumbers on hub replug/reboot | Stable `/dev/psu-ps2k-port` symlink by VID:PID | `99-psu-ps2k-port.rules` |
+| Device stopped responding after idle days | USB autosuspend disabled via udev rule | `99-ate-psu-ps2k.rules` |
+| `/dev/ttyACMx` renumbers on hub replug/reboot | Stable `/dev/ate-psu-ps2k` symlink by VID:PID | `99-ate-psu-ps2k.rules` |
 | `termios.error` on EIO not caught by `except OSError` | Explicit `_TERMIOS_ERROR` handling (not a subclass of `OSError`) | `psu_ps2k_driver.py` |
 | Port never reconnected when idle (no client polling) | Background watchdog thread, independent of client activity | `psu_ps2k_bridge.py` |
 | EEZ Studio showing ~6s round-trips on some commands | Short (100ms) socket timeout + dispatch-on-timeout fallback, instead of waiting a long timeout for a missing trailing `\n` | `psu_ps2k_bridge.py` |

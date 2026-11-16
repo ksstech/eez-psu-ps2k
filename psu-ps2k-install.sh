@@ -9,8 +9,8 @@
 #    1. Installs Python 3 if not present
 #    2. Installs pyserial via apt (python3-serial)
 #    3. Adds current user to the 'dialout' group (serial port access)
-#    4. Copies bridge files to /opt/psu-ps2k/
-#    5. Installs udev rule for autosuspend-off + stable /dev/psu-ps2k-port symlink
+#    4. Copies bridge files to /opt/ate-psu-ps2k/
+#    5. Installs udev rule for autosuspend-off + stable /dev/ate-psu-ps2k symlink
 #    6. Installs and enables the systemd bridge service
 #    7. Starts the service
 # ─────────────────────────────────────────────────────────────────────────────
@@ -18,11 +18,11 @@
 set -e   # exit on any error
 
 # ── Configuration — edit if needed ───────────────────────────────────────────
-INSTALL_DIR="/opt/psu-ps2k"
+INSTALL_DIR="/opt/ate-psu-ps2k"
 SERVICE_NAME="psu-ps2k-bridge"
 TCP_PORT="5025"
 BIND_HOST="0.0.0.0"
-SERIAL_PORT="/dev/psu-ps2k-port"   # set by udev rule in step 5
+SERIAL_PORT="/dev/ate-psu-ps2k"   # set by udev rule in step 5
 # ─────────────────────────────────────────────────────────────────────────────
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -76,31 +76,31 @@ echo "  Files copied to $INSTALL_DIR."
 # ── 5. Install udev rule for stable device naming + autosuspend disable ───────
 echo "[5/7] Installing udev rule..."
 
-UDEV_RULE="/etc/udev/rules.d/99-psu-ps2k-port.rules"
+UDEV_RULE="/etc/udev/rules.d/99-ate-psu-ps2k.rules"
 
 # Remove old split rules if present
 [ -f /etc/udev/rules.d/99-ps2342.rules ]        && sudo rm /etc/udev/rules.d/99-ps2342.rules
 [ -f /etc/udev/rules.d/99-ea-ps2342-usb.rules ] && sudo rm /etc/udev/rules.d/99-ea-ps2342-usb.rules
 
-if [ -f "$SCRIPT_DIR/99-psu-ps2k-port.rules" ]; then
-    sudo cp "$SCRIPT_DIR/99-psu-ps2k-port.rules" "$UDEV_RULE"
+if [ -f "$SCRIPT_DIR/99-ate-psu-ps2k.rules" ]; then
+    sudo cp "$SCRIPT_DIR/99-ate-psu-ps2k.rules" "$UDEV_RULE"
 else
     sudo bash -c "cat > $UDEV_RULE" << 'UDEVRULE'
 ACTION=="add", SUBSYSTEM=="usb", ATTRS{idVendor}=="232e", ATTRS{idProduct}=="0018", \
     ATTR{power/control}="on"
 SUBSYSTEM=="tty", ATTRS{idVendor}=="232e", ATTRS{idProduct}=="0018", \
-    SYMLINK+="psu-ps2k-port"
+    SYMLINK+="ate-psu-ps2k"
 UDEVRULE
 fi
 sudo udevadm control --reload-rules
 sudo udevadm trigger
 
 sleep 1
-if [ -e /dev/psu-ps2k-port ]; then
-    RESOLVED=$(readlink -f /dev/psu-ps2k-port)
-    echo "  /dev/psu-ps2k-port -> $RESOLVED"
+if [ -e /dev/ate-psu-ps2k ]; then
+    RESOLVED=$(readlink -f /dev/ate-psu-ps2k)
+    echo "  /dev/ate-psu-ps2k -> $RESOLVED"
 else
-    echo "  WARNING: /dev/psu-ps2k-port not found yet."
+    echo "  WARNING: /dev/ate-psu-ps2k not found yet."
     echo "  Expected if the PS2000B is not currently connected/powered."
     echo "  The symlink appears automatically when the device is plugged in."
 fi

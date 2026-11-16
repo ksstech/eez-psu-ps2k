@@ -159,12 +159,12 @@ class EaPs2k:
         is active raises EaProtocolError with a clear message.
     """
 
-    def __init__(self, port: str = '/dev/psu-ps2k-port', timeout: float = 0.05):
+    def __init__(self, port: str = '/dev/ate-psu-ps2k', timeout: float = 0.05):
         """
         Parameters
         ----------
         port    : Serial port.
-                  Linux/RPi:  '/dev/psu-ps2k-port'  (udev stable symlink)
+                  Linux/RPi:  '/dev/ate-psu-ps2k'  (udev stable symlink)
                   macOS:      '/dev/cu.usbmodem...'
                   Windows:    'COM3'  (or '\\\\.\\COM12' for ports above COM9)
         timeout : Serial read timeout in seconds.
