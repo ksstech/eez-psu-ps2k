@@ -150,7 +150,7 @@ if [ "$STATUS" != "active" ]; then
 fi
 
 # 9. Monitor service + timer
-echo "[9/10] Installing psu-ps2k-monitor service + timer..."
+echo "[9/10] Installing ate-psu-ps2k-monitor service + timer..."
 sudo cp "$SCRIPT_DIR/ate-psu-ps2k-monitor.service" /etc/systemd/system/
 sudo cp "$SCRIPT_DIR/ate-psu-ps2k-monitor.timer"   /etc/systemd/system/
 sudo systemctl daemon-reload
@@ -186,7 +186,7 @@ echo "  Device  : $(ls -la /dev/ate-psu-ps2k 2>/dev/null || echo 'not found')"
 echo ""
 echo "  Useful commands:"
 echo "    sudo journalctl -u psu-ps2k-bridge -f"
-echo "    journalctl -t psu-ps2k-monitor -n 20"
+echo "    journalctl -t ate-psu-ps2k-monitor -n 20"
 echo "    sudo systemctl status psu-ps2k-bridge"
 echo ""
 echo "  Old scripts backed up at: /home/vh/psu_ps2k.bak/"

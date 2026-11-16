@@ -26,8 +26,8 @@ Deployment:
   ate-psu-ps2k-monitor.timer → ate-psu-ps2k-monitor.service.
 
   Results are viewable with:
-    journalctl -t psu-ps2k-monitor -f
-    journalctl -t psu-ps2k-monitor -n 50
+    journalctl -t ate-psu-ps2k-monitor -f
+    journalctl -t ate-psu-ps2k-monitor -n 50
 """
 
 import argparse
@@ -43,7 +43,7 @@ DEFAULT_HOST      = '127.0.0.1'   # bridge on same machine
 DEFAULT_PORT      = 5025
 DEFAULT_TIMEOUT   = 5.0           # seconds per TCP operation
 DEVICE_SYMLINK    = '/dev/ate-psu-ps2k'
-SYSLOG_TAG        = 'psu-ps2k-monitor'
+SYSLOG_TAG        = 'ate-psu-ps2k-monitor'
 
 
 # ── Logging ───────────────────────────────────────────────────────────────────

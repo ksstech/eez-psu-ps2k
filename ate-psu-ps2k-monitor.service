@@ -3,11 +3,11 @@
 # EA-PS2000B health check — oneshot service triggered by ate-psu-ps2k-monitor.timer
 #
 # Runs psu-ps2k-monitor.py once (exits 0=OK, 1=fail).
-# Results logged to syslog under tag 'psu-ps2k-monitor'.
+# Results logged to syslog under tag 'ate-psu-ps2k-monitor'.
 #
 # View results:
-#   journalctl -t psu-ps2k-monitor -f
-#   journalctl -t psu-ps2k-monitor -n 50 --no-pager
+#   journalctl -t ate-psu-ps2k-monitor -f
+#   journalctl -t ate-psu-ps2k-monitor -n 50 --no-pager
 #
 # Installation:
 #   sudo cp ate-psu-ps2k-monitor.service ate-psu-ps2k-monitor.timer /etc/systemd/system/
