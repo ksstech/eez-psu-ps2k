@@ -27,6 +27,11 @@
 #   99-ea-ps2342-usb.rules  (autosuspend only)
 
 # Rule 1: Disable autosuspend when the USB device is added
+#
+# Naming: added 2026-11-16, phase 3 of the subsystem naming migration
+# (ate-esp-testbed docs/NAMES-SERVICES-PLAN.md). The old rule 99-ea-ps2k-port.rules
+# was removed in phase 5 the same day, so this is the only rule that
+# creates a symlink for this device.
 ACTION=="add", SUBSYSTEM=="usb", ATTRS{idVendor}=="232e", ATTRS{idProduct}=="0018", \
     ATTR{power/control}="on"
 
